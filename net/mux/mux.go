@@ -151,6 +151,24 @@ func (mux *Mux) Serve() error {
 			return err
 		}
 
+		// RPMA: TCP keep alive
+		tcpconn, ok := conn.(*net.TCPConn)
+		if !ok {
+			fmt.Println("error in casting *net.Conn to *net.TCPConn!")
+		}
+		else {
+			file, err := tcpconn.File()
+			if err != nil {
+				fmt.Println("error in getting file for the connection!")
+			}
+			err = syscall.SetsockoptInt(int(file.Fd()), syscall.SOL_TCP, syscall.TCP_KEEPINTVL, 20*60)
+			file.Close()
+			if err != nil {
+				fmt.Println("error in setting priority option on socket:", err)
+			}
+		}
+		// RPMA: off
+		
 		go mux.handleConn(conn)
 	}
 }
